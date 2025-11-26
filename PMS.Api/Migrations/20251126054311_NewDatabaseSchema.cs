@@ -3,12 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace PMS.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class NewDatabaseSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,10 +30,11 @@ namespace PMS.Api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    NrnCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CitizenshipStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TaxIdPan = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RepatriationEligible = table.Column<bool>(type: "bit", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    ProfilePhotoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -54,21 +53,6 @@ namespace PMS.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "InvestmentTypes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    ComplianceNote = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_InvestmentTypes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -183,14 +167,16 @@ namespace PMS.Api.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TotalInvestment = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TotalProfit = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TotalValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TotalReturnPercentage = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    AdvisorId = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    PortfolioName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    TotalInvested = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalCurrentValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalProfitLoss = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalReturnPercentage = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -204,34 +190,118 @@ namespace PMS.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Watchlist",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Symbol = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AssetType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    AddedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Watchlist", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Watchlist_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FixedDeposits",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PortfolioId = table.Column<int>(type: "int", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    AccountNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Principal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InterestRate = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    TenureMonths = table.Column<int>(type: "int", nullable: false),
+                    MaturityDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    MaturityAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FixedDeposits", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FixedDeposits_Portfolios_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InsurancePolicies",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PortfolioId = table.Column<int>(type: "int", nullable: false),
+                    PolicyNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CompanyName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    PremiumValueAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PremiumAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PremiumFrequency = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    NomineeName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    MaturityDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InsurancePolicies", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InsurancePolicies_Portfolios_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Investments",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PortfolioId = table.Column<int>(type: "int", nullable: false),
-                    InvestmentTypeId = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Quantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InvestmentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    SymbolOrName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Quantity = table.Column<decimal>(type: "decimal(18,4)", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     PurchaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CurrentPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DematAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    BrokerName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsLocked = table.Column<bool>(type: "bit", nullable: false),
-                    IpoAllotmentDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Currency = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SourceOfFund = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    CurrentValue = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ProfitLoss = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ReturnPercentage = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Issuer = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    MaturityDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CouponRate = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    Blockchain = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    TokenType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Purity = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    WeightInGrams = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    GoldType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    FundName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Nav = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Area = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    PropertyType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Exchange = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Sector = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Investments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Investments_InvestmentTypes_InvestmentTypeId",
-                        column: x => x.InvestmentTypeId,
-                        principalTable: "InvestmentTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Investments_Portfolios_PortfolioId",
                         column: x => x.PortfolioId,
@@ -241,113 +311,101 @@ namespace PMS.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DividendBonusHistories",
+                name: "Loans",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvestmentId = table.Column<int>(type: "int", nullable: false),
-                    RecordDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CashDividend = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    BonusRatio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TaxDeducted = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    PortfolioId = table.Column<int>(type: "int", nullable: false),
+                    LoanType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    LoanAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InterestRate = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EmiAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Lender = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DividendBonusHistories", x => x.Id);
+                    table.PrimaryKey("PK_Loans", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DividendBonusHistories_Investments_InvestmentId",
-                        column: x => x.InvestmentId,
-                        principalTable: "Investments",
+                        name: "FK_Loans_Portfolios_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "PerformanceHistories",
+                name: "SavingAccounts",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvestmentId = table.Column<int>(type: "int", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Value = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    PortfolioId = table.Column<int>(type: "int", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    AccountNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InterestRate = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    DateOpened = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PerformanceHistories", x => x.Id);
+                    table.PrimaryKey("PK_SavingAccounts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PerformanceHistories_Investments_InvestmentId",
-                        column: x => x.InvestmentId,
-                        principalTable: "Investments",
+                        name: "FK_SavingAccounts_Portfolios_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaxRecords",
+                name: "InsurancePayments",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvestmentId = table.Column<int>(type: "int", nullable: false),
-                    FinancialYear = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CapitalGains = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TaxRate = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TaxPaid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CalculationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TaxRecords", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TaxRecords_Investments_InvestmentId",
-                        column: x => x.InvestmentId,
-                        principalTable: "Investments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Transactions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    InvestmentId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PolicyId = table.Column<int>(type: "int", nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Method = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Transactions", x => x.Id);
+                    table.PrimaryKey("PK_InsurancePayments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transactions_Investments_InvestmentId",
-                        column: x => x.InvestmentId,
-                        principalTable: "Investments",
+                        name: "FK_InsurancePayments_InsurancePolicies_PolicyId",
+                        column: x => x.PolicyId,
+                        principalTable: "InsurancePolicies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "InvestmentTypes",
-                columns: new[] { "Id", "ComplianceNote", "IsActive", "Name" },
-                values: new object[,]
+            migrationBuilder.CreateTable(
+                name: "LoanEmiSchedules",
+                columns: table => new
                 {
-                    { 1, null, true, "NEPSE Stock" },
-                    { 2, null, true, "Mutual Fund" },
-                    { 3, null, true, "Bonds" },
-                    { 4, null, true, "Fixed Deposit" },
-                    { 5, null, true, "Gold" },
-                    { 6, null, true, "Real Estate" },
-                    { 7, "Banned by NRB – 2025", false, "Cryptocurrency" },
-                    { 8, null, true, "Provident Funds" },
-                    { 9, null, true, "Insurance/ULIP" },
-                    { 10, null, true, "Cooperatives" },
-                    { 11, null, true, "Other" }
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LoanId = table.Column<int>(type: "int", nullable: false),
+                    EmiDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PrincipalComponent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    InterestComponent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalEmi = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Paid = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoanEmiSchedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LoanEmiSchedules_Loans_LoanId",
+                        column: x => x.LoanId,
+                        principalTable: "Loans",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -390,14 +448,19 @@ namespace PMS.Api.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DividendBonusHistories_InvestmentId",
-                table: "DividendBonusHistories",
-                column: "InvestmentId");
+                name: "IX_FixedDeposits_PortfolioId",
+                table: "FixedDeposits",
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Investments_InvestmentTypeId",
-                table: "Investments",
-                column: "InvestmentTypeId");
+                name: "IX_InsurancePayments_PolicyId",
+                table: "InsurancePayments",
+                column: "PolicyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InsurancePolicies_PortfolioId",
+                table: "InsurancePolicies",
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Investments_PortfolioId",
@@ -405,9 +468,14 @@ namespace PMS.Api.Migrations
                 column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PerformanceHistories_InvestmentId",
-                table: "PerformanceHistories",
-                column: "InvestmentId");
+                name: "IX_LoanEmiSchedules_LoanId",
+                table: "LoanEmiSchedules",
+                column: "LoanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Loans_PortfolioId",
+                table: "Loans",
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Portfolios_UserId",
@@ -415,14 +483,14 @@ namespace PMS.Api.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TaxRecords_InvestmentId",
-                table: "TaxRecords",
-                column: "InvestmentId");
+                name: "IX_SavingAccounts_PortfolioId",
+                table: "SavingAccounts",
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transactions_InvestmentId",
-                table: "Transactions",
-                column: "InvestmentId");
+                name: "IX_Watchlist_UserId",
+                table: "Watchlist",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -444,25 +512,31 @@ namespace PMS.Api.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "DividendBonusHistories");
+                name: "FixedDeposits");
 
             migrationBuilder.DropTable(
-                name: "PerformanceHistories");
-
-            migrationBuilder.DropTable(
-                name: "TaxRecords");
-
-            migrationBuilder.DropTable(
-                name: "Transactions");
-
-            migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "InsurancePayments");
 
             migrationBuilder.DropTable(
                 name: "Investments");
 
             migrationBuilder.DropTable(
-                name: "InvestmentTypes");
+                name: "LoanEmiSchedules");
+
+            migrationBuilder.DropTable(
+                name: "SavingAccounts");
+
+            migrationBuilder.DropTable(
+                name: "Watchlist");
+
+            migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "InsurancePolicies");
+
+            migrationBuilder.DropTable(
+                name: "Loans");
 
             migrationBuilder.DropTable(
                 name: "Portfolios");
